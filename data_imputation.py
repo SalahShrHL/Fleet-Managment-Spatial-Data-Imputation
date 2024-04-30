@@ -26,3 +26,40 @@ try:
 finally:
     # Close the connection
     connection.close()
+
+######################################################################################
+# Initialize list to store tournes
+tournes = []
+
+# Initialize variables to store current tourne data
+current_tourne = []
+current_engine_status = None
+
+# Iterate over the fetched rows
+for row in cursor.fetchall():
+    # Check if engine_status has changed
+    if row['engine_status'] != current_engine_status:
+        # If engine_status is 1 (active), start a new tourne
+        if row['engine_status'] == 1:
+            current_tourne = []  # Start a new tourne
+            current_tourne.append(row)  # Add current row to the new tourne
+            tournes.append(current_tourne)  # Append new tourne to the list of tournes
+        # If engine_status is 0 (inactive) and current tourne is not empty, end the current tourne
+        elif row['engine_status'] == 0 and current_tourne:
+            current_tourne = []  # Clear the current tourne
+    # If engine_status remains the same, continue adding points to the current tourne
+    elif current_tourne:
+        current_tourne.append(row)  # Add current row to the current tourne
+
+    # Update current engine_status for the next iteration
+    current_engine_status = row['engine_status']
+
+
+
+
+
+tourne_1 = tournes[0]  # Assuming tourne 1 is the first tourne in the list
+
+#print (tourne_1)
+
+######################################################################################

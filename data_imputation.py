@@ -2,6 +2,9 @@ import pymysql
 import pymysql.cursors
 from math import radians, cos, sin, sqrt, atan2
 import folium
+import requests
+import polyline
+
 # Connect to the database
 connection = pymysql.connect(
     host='localhost',
@@ -107,4 +110,76 @@ for i in range(len(tourne_1) - 2):
         new_points.append((new_lat, new_lon))
 
 
+
+######################################################################################
+
 m = folium.Map(location=[36.733706, 3.337851], zoom_start=13)
+
+
+gpx_content = '<?xml version="1.0" encoding="UTF-8"?>\n'
+gpx_content += '<gpx version="1.1" creator="GraphHopper">\n<trk><name>GPS Data</name><trkseg>\n'
+for point in tourne_1:
+   gpx_content += f'    <trkpt lat="{point["latitude"]}" lon="{point["longitude"]}"></trkpt>\n'
+#    gpx_content += f'    <trkpt lat="{point[0]}" lon="{point[1]}"></trkpt>\n'
+
+gpx_content += '</trkseg></trk></gpx>'
+
+
+
+def send_gpx_for_matching(gpx_content):
+    """Send the GPX content to the GraphHopper Map Matching API and return the decoded points."""
+    url = 'http://localhost:8989/match'
+    params = {
+        'profile': 'car',
+        'type': 'json'
+    }
+    headers = {
+        'Content-Type': 'application/gpx+xml'
+    }
+    response = requests.post(url, headers=headers, params=params, data=gpx_content)
+    if response.status_code == 200:
+        # Assuming the response contains the encoded polyline in a known structure
+        matched_data = response.json()
+        points = matched_data['paths'][0]['points']
+        decoded_points = polyline.decode(points)
+        return decoded_points
+    else:
+        raise Exception(f"Failed to get a valid response: {response.text}")
+
+# Assuming you have generated the GPX content as before
+decoded_points = send_gpx_for_matching(gpx_content)
+
+# Use the decoded points as needed, for example, adding them to a Folium map
+for point in decoded_points:
+    lat, lon = point
+    folium.Marker([lat, lon], icon=folium.Icon(color='green')).add_to(m)
+
+
+# ########################################################################################################################################################
+# Display original tourne points with enumeration
+for idx, point in enumerate(tourne_1):
+    folium.Marker(
+        [float(point['latitude']), float(point['longitude'])],
+        popup=f'Tourne Original Point {idx + 1}',
+        icon=folium.Icon(color='blue')
+    ).add_to(m)
+
+# Display new points calculated by dead reckoning with enumeration
+for idx, (lat, lon) in enumerate(new_points):
+    folium.Marker(
+        [lat, lon],
+        popup=f'New Point {idx + 1}',
+        icon=folium.Icon(color='purple')
+    ).add_to(m)
+
+# Display decoded points from GraphHopper with enumeration
+for idx, (lat, lon) in enumerate(decoded_points):
+    folium.Marker(
+        [lat, lon],
+        popup=f'Decoded Point {idx + 1}',
+        icon=folium.Icon(color='green')
+    ).add_to(m)
+
+# ########################################################################################################################################################
+
+m.save(r'C:\Users\SALAHPC\Documents\01-SalahPFE\envs\pfe_part2\map.html')

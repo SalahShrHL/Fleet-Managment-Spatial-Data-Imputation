@@ -2,7 +2,7 @@
 
 
 ## Description
-This project aims to improve vehicle tracking accuracy during GPS signal loss using spatial data imputation techniques. By integrating dead reckoning and Hidden Markov Model (HMM) map matching, the system can generate vehicle position points reliably in the absence of GPS data. This repository contains all the code, documentation, and additional resources necessary to understand and implement the proposed solutions.
+This project aims to enhance vehicle tracking accuracy in scenarios of GPS signal loss through the application of spatial data imputation techniques. By integrating dead reckoning and Hidden Markov Model (HMM) map matching, the system reliably generates vehicle position points even in the absence of GPS data. The map matching functionality is implemented using the GraphHopper API. This repository includes all the code, documentation, and additional resources needed to comprehend and implement the proposed solution.
 
 ## Features
 - **Dead Reckoning Implementation:** Utilizes vehicle sensor data to estimate the position when GPS is unavailable.

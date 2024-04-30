@@ -63,3 +63,48 @@ tourne_1 = tournes[0]  # Assuming tourne 1 is the first tourne in the list
 #print (tourne_1)
 
 ######################################################################################
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    # Calculate distance between two points on the earth (specified in decimal degrees)
+    R = 6371000  # Radius of the earth in meters
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    distance = R * c
+    return distance
+
+def dead_reckoning(lat, lon, heading, speed, time_diff):
+    # Calculate the new position based on speed, heading, and time difference
+    # Heading in degrees, speed in m/s, and time_diff in seconds
+    distance = speed * time_diff
+    # Convert heading to radians
+    heading = radians(heading)
+    delta_lat = distance * cos(heading) / 6371000
+    delta_lon = distance * sin(heading) / (6371000 * cos(radians(lat)))
+    # Convert deltas from radians to degrees
+    new_lat = lat + delta_lat * (180 / 3.141592)
+    new_lon = lon + delta_lon * (180 / 3.141592)
+    return new_lat, new_lon
+
+# Assume tourne_1 is sorted by trace_date
+new_points = []
+for i in range(len(tourne_1) - 2):
+    lat1 = float(tourne_1[i]['latitude'])
+    lon1 = float(tourne_1[i]['longitude'])
+    lat2 = float(tourne_1[i+1]['latitude'])
+    lon2 = float(tourne_1[i+1]['longitude'])
+    distance = calculate_distance(lat1, lon1, lat2, lon2)
+    if distance > 5:
+        # Implement dead reckoning here if needed
+        # Example: Assume speed and heading are available and reasonable
+        speed = tourne_1[i]['speed']
+        heading = tourne_1[i]['gprmc_heading_deg'] if tourne_1[i]['gprmc_heading_deg'] else 0
+        # Calculate time difference in seconds
+        time_diff = (tourne_1[i+1]['trace_date'] - tourne_1[i]['trace_date']).total_seconds()
+        new_lat, new_lon = dead_reckoning(lat1, lon1, heading, speed, time_diff)
+        new_points.append((new_lat, new_lon))
+
+
+m = folium.Map(location=[36.733706, 3.337851], zoom_start=13)
